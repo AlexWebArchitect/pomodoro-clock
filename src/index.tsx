@@ -31,6 +31,8 @@ interface State {
   mode: string;
   break: number;
   session: number;
+  inter: number;
+  intervalID: number;
 }
 
 class PomodoroClock extends React.Component<Props, State> {
@@ -39,44 +41,63 @@ class PomodoroClock extends React.Component<Props, State> {
     this.state = {
       mode: 'Start',
       break: 1,
-      session: 1
+      session: 1,
+      inter: 0,
+      intervalID: 0
     };
   }
 
   handleClick(n: string, i: string): void {
     let counter: number;
+    let mode = this.state.mode;
     switch (n) {
       case 'BREAK':
         counter = this.state.break;
-        if ( i === '+') {
-          this.setState({
-            break: counter + 1
-          });
-        } else {
-          this.setState({
-            break: counter - 1 
-          });
+        if (i === '+' && mode === 'Start') {
+          this.setState({ break: counter + 1 });
+        } else if (i === '-' && counter > 1 && mode === 'Start') {
+          this.setState({ break: counter - 1 });
         }
         break;
       case 'SESSION':
         counter = this.state.session;
-        if ( i === '+') {
-          this.setState({
-            session: counter + 1
-          });
-        } else {
-          this.setState({
-            session: counter - 1 
-          });
+        if (i === '+' && mode === 'Start') {
+          this.setState({ session: counter + 1 });
+        } else if (i === '-' && counter > 1 && mode === 'Start') {
+          this.setState({ session: counter - 1 });
         }
         break;
-      default:
-        break;
+      default: break;
     }
   }
 
   handlePress() {
-    
+    let mode = this.state.mode;
+    let sessionTimer: number;
+    let breakTimer: number;
+    let timeoutID: number;
+    let inter: number;
+    let intervalID: number;
+    if (mode === 'Start') {
+      this.setState({ mode: 'Session' });
+      sessionTimer = this.state.session * 60000;
+      breakTimer = this.state.break * 60000;
+      timeoutID = setTimeout(() => {
+        this.setState({ mode: 'Break' });
+        inter = setInterval(() => {
+          this.setState({ mode: 'Break' });
+        }, sessionTimer + breakTimer);
+        this.setState({ inter: inter });
+      }, sessionTimer);
+      intervalID = setInterval(() => {
+        this.setState({ mode: 'Session' });
+      }, sessionTimer + breakTimer);
+      this.setState({ intervalID: intervalID });
+    } else {
+      clearInterval(this.state.inter);
+      clearInterval(this.state.intervalID);
+      this.setState({ mode: 'Start' });
+    }
   }
 
   render() {
