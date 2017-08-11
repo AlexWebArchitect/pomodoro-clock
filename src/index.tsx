@@ -31,40 +31,47 @@ interface State {
   mode: string;
   break: number;
   session: number;
-  inter: number;
+  status: string;
   intervalID: number;
+  time: number;
 }
 
 class PomodoroClock extends React.Component<Props, State> {
   constructor() {
     super();
     this.state = {
-      mode: 'Start',
+      mode: 'Session',
       break: 1,
       session: 1,
-      inter: 0,
-      intervalID: 0
+      status: 'Pause',
+      intervalID: 0,
+      time: 60
     };
   }
 
   handleClick(n: string, i: string): void {
     let counter: number;
     let mode = this.state.mode;
+    let status = this.state.status;
     switch (n) {
       case 'BREAK':
         counter = this.state.break;
-        if (i === '+' && mode === 'Start') {
+        if (i === '+' && status === 'Pause') {
           this.setState({ break: counter + 1 });
-        } else if (i === '-' && counter > 1 && mode === 'Start') {
+          if (mode === 'Break') { this.setState({ time: (counter + 1) * 60 }); }
+        } else if (i === '-' && counter > 1 && status === 'Pause') {
           this.setState({ break: counter - 1 });
+          if (mode === 'Break') { this.setState({ time: (counter - 1) * 60 }); }
         }
         break;
       case 'SESSION':
         counter = this.state.session;
-        if (i === '+' && mode === 'Start') {
+        if (i === '+' && status === 'Pause') {
           this.setState({ session: counter + 1 });
-        } else if (i === '-' && counter > 1 && mode === 'Start') {
+          if (mode === 'Session') { this.setState({ time: (counter + 1) * 60 }); }
+        } else if (i === '-' && counter > 1 && status === 'Pause') {
           this.setState({ session: counter - 1 });
+          if (mode === 'Session') { this.setState({ time: (counter - 1) * 60 }); }
         }
         break;
       default: break;
@@ -72,38 +79,44 @@ class PomodoroClock extends React.Component<Props, State> {
   }
 
   handlePress() {
-    let mode = this.state.mode;
-    let sessionTimer: number;
-    let breakTimer: number;
-    let timeoutID: number;
-    let inter: number;
+    let status = this.state.status;
     let intervalID: number;
-    if (mode === 'Start') {
-      this.setState({ mode: 'Session' });
-      sessionTimer = this.state.session * 60000;
-      breakTimer = this.state.break * 60000;
-      timeoutID = setTimeout(() => {
-        this.setState({ mode: 'Break' });
-        inter = setInterval(() => {
-          this.setState({ mode: 'Break' });
-        }, sessionTimer + breakTimer);
-        this.setState({ inter: inter });
-      }, sessionTimer);
+    let seconds: number;
+    if (status === 'Pause') {
+      this.setState({ status: 'Play' });
       intervalID = setInterval(() => {
-        this.setState({ mode: 'Session' });
-      }, sessionTimer + breakTimer);
+        seconds = this.state.time;
+        if (seconds <= 1) { changeMode(this.state.mode); }
+        this.setState({ time: seconds - 1 });
+      }, 1000);
       this.setState({ intervalID: intervalID });
     } else {
-      clearInterval(this.state.inter);
       clearInterval(this.state.intervalID);
-      this.setState({ mode: 'Start' });
+      this.setState({ status: 'Pause' });
     }
+    let changeMode = (mode: string) => {
+      let time: number;
+      let delay: number;
+      if (mode === 'Session') {
+        time = this.state.break * 60;
+        delay = setTimeout(() => {
+          this.setState({ mode: 'Break', time: time });
+        }, 100);
+      } else {
+        time = this.state.session * 60;
+        delay = setTimeout(() => {
+          this.setState({ mode: 'Session', time: time });
+        }, 100);
+      }
+    };
   }
 
   render() {
     return (
       <div>
         <button onClick={() => this.handlePress()}>{this.state.mode}</button>
+        {this.state.time}
+        {this.state.status}
         <Counter name="BREAK" counter={this.state.break} onClick={(n, i) => this.handleClick(n, i)} />
         <Counter name="SESSION" counter={this.state.session} onClick={(n, i) => this.handleClick(n, i)} />
       </div>
