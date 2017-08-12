@@ -26,6 +26,29 @@ class Counter extends React.Component<CounterProps, CounterState>  {
   }
 }
 
+interface CircleProps {
+  radius: number;
+  value: number;
+  children?: any;
+}
+
+function CircleProgress({ radius, value = 1, children }: CircleProps) {
+  const pct = (1 - value) * Math.PI * 100;
+  return (
+    <div>
+      <div className="circle-progress">
+        <div style={{ display: 'inline-block', position: 'relative' }} className="circle-progress__wrap">
+          <svg width={radius * 2} height={radius * 2} viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg">
+            <circle className="circle-progress__background" r="50" cx="50" cy="50" fill="transparent" />
+            <circle className="circle-progress__bar" r="50" cx="50" cy="50" fill="transparent" strokeDasharray={Math.PI * 100} strokeDashoffset={pct} />
+          </svg>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface Props { }
 interface State {
   mode: string;
@@ -34,6 +57,7 @@ interface State {
   status: string;
   intervalID: number;
   time: number;
+  value: number;
 }
 
 class PomodoroClock extends React.Component<Props, State> {
@@ -45,7 +69,8 @@ class PomodoroClock extends React.Component<Props, State> {
       session: 1,
       status: 'Pause',
       intervalID: 0,
-      time: 60
+      time: 60,
+      value: 0
     };
   }
 
@@ -58,20 +83,20 @@ class PomodoroClock extends React.Component<Props, State> {
         counter = this.state.break;
         if (i === '+' && status === 'Pause') {
           this.setState({ break: counter + 1 });
-          if (mode === 'Break') { this.setState({ time: (counter + 1) * 60 }); }
+          if (mode === 'Break') { this.setState({ time: (counter + 1) * 60, value: 0 }); }
         } else if (i === '-' && counter > 1 && status === 'Pause') {
           this.setState({ break: counter - 1 });
-          if (mode === 'Break') { this.setState({ time: (counter - 1) * 60 }); }
+          if (mode === 'Break') { this.setState({ time: (counter - 1) * 60, value: 0 }); }
         }
         break;
       case 'SESSION':
         counter = this.state.session;
         if (i === '+' && status === 'Pause') {
           this.setState({ session: counter + 1 });
-          if (mode === 'Session') { this.setState({ time: (counter + 1) * 60 }); }
+          if (mode === 'Session') { this.setState({ time: (counter + 1) * 60, value: 0 }); }
         } else if (i === '-' && counter > 1 && status === 'Pause') {
           this.setState({ session: counter - 1 });
-          if (mode === 'Session') { this.setState({ time: (counter - 1) * 60 }); }
+          if (mode === 'Session') { this.setState({ time: (counter - 1) * 60, value: 0 }); }
         }
         break;
       default: break;
@@ -82,12 +107,18 @@ class PomodoroClock extends React.Component<Props, State> {
     let status = this.state.status;
     let intervalID: number;
     let seconds: number;
+    let value: number;
     if (status === 'Pause') {
       this.setState({ status: 'Play' });
       intervalID = setInterval(() => {
         seconds = this.state.time;
+        if (this.state.mode === 'Session') {
+          value = this.state.value + (100 / (this.state.session * 60));
+        } else {
+          value = this.state.value + (100 / (this.state.break * 60));
+        }
         if (seconds <= 1) { changeMode(this.state.mode); }
-        this.setState({ time: seconds - 1 });
+        this.setState({ time: seconds - 1, value: value });
       }, 1000);
       this.setState({ intervalID: intervalID });
     } else {
@@ -100,25 +131,43 @@ class PomodoroClock extends React.Component<Props, State> {
       if (mode === 'Session') {
         time = this.state.break * 60;
         delay = setTimeout(() => {
-          this.setState({ mode: 'Break', time: time });
+          this.setState({ mode: 'Break', time: time, value: 0 });
         }, 100);
       } else {
         time = this.state.session * 60;
         delay = setTimeout(() => {
-          this.setState({ mode: 'Session', time: time });
+          this.setState({ mode: 'Session', time: time, value: 0 });
         }, 100);
       }
     };
   }
 
   render() {
+    let Time;
+    let time = this.state.time;
+    let seconds = time % 60;
+    let minutes = (time - seconds) / 60;
+    if (seconds === 0) {
+      Time = minutes;
+    } else {
+      let strconds = seconds + '';
+      if (strconds.split('').length < 2) {
+        strconds = '0' + seconds;
+      }
+      Time = minutes + ':' + strconds;
+    }
     return (
       <div>
         <button onClick={() => this.handlePress()}>{this.state.mode}</button>
-        {this.state.time}
+        {Time}
         {this.state.status}
         <Counter name="BREAK" counter={this.state.break} onClick={(n, i) => this.handleClick(n, i)} />
         <Counter name="SESSION" counter={this.state.session} onClick={(n, i) => this.handleClick(n, i)} />
+        <CircleProgress radius={150} value={this.state.value / 100}>
+          <div className="circle-progress__text">
+            {Time}
+          </div>
+        </CircleProgress>
       </div>
     );
   }
