@@ -26,6 +26,27 @@ class Counter extends React.Component<CounterProps, CounterState>  {
   }
 }
 
+interface CircleProps {
+  radius: number;
+  value: number;
+  children?: any;
+}
+
+function CircleProgress({ radius, value = 1, children }: CircleProps) {
+    const pct = (1 - value) * Math.PI * 100;
+    return <div>
+      <div className="circle-progress">
+        <div style={{display: 'inline-block', position: 'relative'}} className="circle-progress__wrap">
+          <svg width={radius * 2} height={radius * 2} viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg">
+            <circle className="circle-progress__background" r="50" cx="50" cy="50" fill="transparent" />
+            <circle className="circle-progress__bar" r="50" cx="50" cy="50" fill="transparent" strokeDasharray={Math.PI * 100} strokeDashoffset={pct}  />
+          </svg>
+          {children}
+        </div>
+      </div>
+    </div>;
+}
+
 interface Props { }
 interface State {
   mode: string;
@@ -34,6 +55,7 @@ interface State {
   status: string;
   intervalID: number;
   time: number;
+  value: number;
 }
 
 class PomodoroClock extends React.Component<Props, State> {
@@ -45,7 +67,8 @@ class PomodoroClock extends React.Component<Props, State> {
       session: 1,
       status: 'Pause',
       intervalID: 0,
-      time: 60
+      time: 60,
+      value: 10
     };
   }
 
@@ -132,6 +155,9 @@ class PomodoroClock extends React.Component<Props, State> {
         {this.state.status}
         <Counter name="BREAK" counter={this.state.break} onClick={(n, i) => this.handleClick(n, i)} />
         <Counter name="SESSION" counter={this.state.session} onClick={(n, i) => this.handleClick(n, i)} />
+        <CircleProgress radius={150} value={this.state.value / 100}>
+          <div className="circle-progress__text">{Time}</div>
+        </CircleProgress>
       </div>
     );
   }
