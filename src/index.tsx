@@ -112,10 +112,23 @@ class PomodoroClock extends React.Component<Props, State> {
   }
 
   render() {
+    let Time;
+    let time = this.state.time;
+    let seconds = time % 60;
+    let minutes = (time - seconds) / 60;
+    if (seconds === 0) {
+      Time = minutes;
+    } else {
+      let strconds = seconds + '';
+      if (strconds.split('').length < 2) {
+        strconds = '0' + seconds;
+      }
+      Time = minutes + ':' + strconds;
+    }
     return (
       <div>
         <button onClick={() => this.handlePress()}>{this.state.mode}</button>
-        {this.state.time}
+        {Time}
         {this.state.status}
         <Counter name="BREAK" counter={this.state.break} onClick={(n, i) => this.handleClick(n, i)} />
         <Counter name="SESSION" counter={this.state.session} onClick={(n, i) => this.handleClick(n, i)} />
