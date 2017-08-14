@@ -14,12 +14,12 @@ interface CounterState { }
 class Counter extends React.Component<CounterProps, CounterState>  {
   render() {
     return (
-      <div>
+      <div className="counter">
         {this.props.name} LENGTH
         <div>
-          <button onClick={() => this.props.onClick(this.props.name, '-')}>-</button>
+          <button className="boot" onClick={() => this.props.onClick(this.props.name, '-')}>-</button>
           {this.props.counter}
-          <button onClick={() => this.props.onClick(this.props.name, '+')}>+</button>
+          <button className="boot" onClick={() => this.props.onClick(this.props.name, '+')}>+</button>
         </div>
       </div>
     );
@@ -27,15 +27,16 @@ class Counter extends React.Component<CounterProps, CounterState>  {
 }
 
 interface CircleProps {
+  children?: any;
   radius: number;
   value: number;
-  children?: any;
+  onClick(): void;
 }
 
-function CircleProgress({ radius, value = 1, children }: CircleProps) {
+function CircleProgress({ radius, value = 1, onClick, children }: CircleProps) {
   const pct = (1 - value) * Math.PI * 100;
   return (
-    <div>
+    <div onClick={() => onClick()}>
       <div className="circle-progress">
         <div style={{ display: 'inline-block', position: 'relative' }} className="circle-progress__wrap">
           <svg width={radius * 2} height={radius * 2} viewBox="0 0 100 100" version="1.1" xmlns="http://www.w3.org/2000/svg">
@@ -65,11 +66,11 @@ class PomodoroClock extends React.Component<Props, State> {
     super();
     this.state = {
       mode: 'Session',
-      break: 1,
-      session: 1,
+      break: 5,
+      session: 25,
       status: 'Pause',
       intervalID: 0,
-      time: 60,
+      time: 1500,
       value: 0
     };
   }
@@ -158,14 +159,16 @@ class PomodoroClock extends React.Component<Props, State> {
     }
     return (
       <div>
-        <button onClick={() => this.handlePress()}>{this.state.mode}</button>
-        {Time}
-        {this.state.status}
         <Counter name="BREAK" counter={this.state.break} onClick={(n, i) => this.handleClick(n, i)} />
         <Counter name="SESSION" counter={this.state.session} onClick={(n, i) => this.handleClick(n, i)} />
-        <CircleProgress radius={150} value={this.state.value / 100}>
+        <CircleProgress radius={150} value={this.state.value / 100} onClick={() => this.handlePress()}>
           <div className="circle-progress__text">
-            {Time}
+            <div className="status">
+              {this.state.mode}
+            </div>   
+            <div className="time">
+              {Time}
+            </div>
           </div>
         </CircleProgress>
       </div>
